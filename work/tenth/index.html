@@ -77,6 +77,7 @@
         var errortext = '';
 
 
+
         // 検索ワードと前回ワードの比較確認（同じであればページ数を増やす、異なればリストを初期化、前回ワードに検索ワードを代入し1ページ表示）
         function confirmWord () {
           if (oldWord === searchWord) {
@@ -103,21 +104,19 @@
           confirmWord ();
         };
 
-        // list追加
+        // <li>...を追加する
         function list(item) {
-          var list = $(
-          '<li class = lists__item>' + 
-            '<div class=lists__item__inner>' + 
-              '<a href="' + item.Item.itemUrl + '" class=lists__item__link target="_blank">' + 
-                '<img src="' + item.Item.largeImageUrl + '" class=lists__item__img alt="' + item.Item.title + '">' + 
-                '<p class=lists__item__detail>作品名：' + item.Item.title + '</p>' + 
-                '<p class=lists__item__detail>作者　：' + item.Item.author + '</p>' + 
-                '<p class=lists__item__detail>出版社：' + item.Item.publisherName + '</p>' + 
-              '</a>' + 
-            '</div>' + 
-          '</li>');
-            // ul要素内に変数list(<li>....)を付与
-          $('ul').prepend(list);
+        return(
+        '<li class = lists__item>' + 
+          '<div class=lists__item__inner>' + 
+            '<a href="' + item.Item.itemUrl + '" class=lists__item__link target="_blank">' + 
+              '<img src="' + item.Item.largeImageUrl + '" class=lists__item__img alt="' + item.Item.title + '">' + 
+              '<p class=lists__item__detail>作品名：' + item.Item.title + '</p>' + 
+              '<p class=lists__item__detail>作者　：' + item.Item.author + '</p>' + 
+              '<p class=lists__item__detail>出版社：' + item.Item.publisherName + '</p>' + 
+            '</a>' + 
+          '</div>' + 
+        '</li>');
         };
 
         // メッセージを表示
@@ -153,10 +152,15 @@
 
             // 検索結果が0件より大きいとき
             if (data.hits > 0) {
-              // Itemそれぞれに対して処理
+
+              var book_list = '';
+
+              // 取得した配列ItemsのItemそれぞれに対して処理
               $.each(data.Items,function(index,item) {
-                list(item);
+                book_list += list(item)
               });
+              // 20ずつのかたまりを検索する度に先頭に来るよう配置
+              $('ul').prepend(book_list);
 
             // 検索結果が0件のとき
             } else {
@@ -170,6 +174,7 @@
             console.log("textStatus     : " + textStatus);    // タイムアウト、パースエラー
             console.log("errorThrown    : " + errorThrown.message); // 例外情報
             xhr_status = jqXHR.status;
+
             errorMessages();
             $('.search').after('<div class = message><p class = error_message>エラー：' + errortext + '</p></div>');
           });
