@@ -32,7 +32,6 @@
       // 下記URLにAPIの仕様が載ってるいので、ブラウザで開いて参考にしてください。
       // https://webservice.rakuten.co.jp/api/bookstotalsearch/
       //
-      //
       // [使うメソッド]
       // $.each(配列, function functionName() {}) 配列に対しての繰り返し処理
       // $.ajax({}) 外部ファイルやURLに対してデータをリクエストすることができます。
@@ -68,6 +67,117 @@
       //
       //
       //
+
+      $(function() {
+        
+        var searchWord = '';
+        var oldWord = '';
+        var page = '';
+        var xhr_status = ''; 
+        var errortext = '';
+
+
+        // 検索ワードと前回ワードの比較確認（同じであればページ数を増やす、異なればリストを初期化、前回ワードに検索ワードを代入し1ページ表示）
+        function confirmWord () {
+          if (oldWord === searchWord) {
+            page++;
+          } else {
+            $('ul').empty();
+            oldWord = searchWord;
+            page = 1;
+          }
+        };
+
+
+
+        // クリックした時
+        function click() {
+          // 前回検索時の検索結果0件エラーを削除
+          $('.message').remove();
+
+          // 検索ワードの値を取得
+          searchWord = $('#js-search-word').val();
+          console.log(searchWord);
+
+          // ワード比較し、ページ設定
+          confirmWord ();
+        };
+
+        // list追加
+        function list(item) {
+          var list = $(
+          '<li class = lists__item>' + 
+            '<div class=lists__item__inner>' + 
+              '<a href="' + item.Item.itemUrl + '" class=lists__item__link target="_blank">' + 
+                '<img src="' + item.Item.largeImageUrl + '" class=lists__item__img alt="' + item.Item.title + '">' + 
+                '<p class=lists__item__detail>作品名：' + item.Item.title + '</p>' + 
+                '<p class=lists__item__detail>作者　：' + item.Item.author + '</p>' + 
+                '<p class=lists__item__detail>出版社：' + item.Item.publisherName + '</p>' + 
+              '</a>' + 
+            '</div>' + 
+          '</li>');
+            // ul要素内に変数list(<li>....)を付与
+          $('ul').prepend(list);
+        };
+
+        // メッセージを表示
+        function errorMessages() {
+          if (xhr_status === 400) { 
+            errortext = '検索ワードが空か、もしくは半角英数字1文字です。<br>半角英数字2文字以上入力してください。';
+          } else if (xhr_status === 429) {
+            errortext = 'リクエスト数が多すぎます。しばらく時間を空けてご利用ください。';
+          } else {
+            errortext = 'ネットが切れているか、若しくは通信エラーです。';
+          }
+        };
+
+
+
+        // ボタンがクリックされたら
+        $('#js-search-button').on('click', function() {
+          click();
+
+          // ajaxで楽天ブックス総合検索API情報を取得
+          $.ajax({
+            url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
+            data: {
+              applicationId: '1019399324990976605', 
+              booksGenreId: '001',
+              hits: 20,
+              page: page, 
+              keyword: searchWord
+            }
+          // 正常にデータ通信が出来た場合
+          }).done(function(data) {
+            console.log(data);
+
+            // 検索結果が0件より大きいとき
+            if (data.hits > 0) {
+              // Itemそれぞれに対して処理
+              $.each(data.Items,function(index,item) {
+                list(item);
+              });
+
+            // 検索結果が0件のとき
+            } else {
+              $('.search').after('<div class = message><p class = cant_find_message>検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい。</p></div>');
+            };
+
+          // 正常にデータ通信が出来なかった場合
+          }).fail(function(jqXHR, textStatus, errorThrown) {
+            console.log("ajax通信に失敗しました");
+            console.log("jqXHR          : " + jqXHR.status); // HTTPステータス取得
+            console.log("textStatus     : " + textStatus);    // タイムアウト、パースエラー
+            console.log("errorThrown    : " + errorThrown.message); // 例外情報
+            xhr_status = jqXHR.status;
+            errorMessages();
+            $('.search').after('<div class = message><p class = error_message>エラー：' + errortext + '</p></div>');
+          });
+        });
+
+
+
+      });
     </script>
   </body>
 </html>
